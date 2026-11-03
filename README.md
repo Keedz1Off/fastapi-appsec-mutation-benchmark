@@ -45,3 +45,19 @@ Runtime used Python 3.14 and a SQLite/UUID adapter. PostgreSQL, frontend, real S
 Independent, AI-assisted educational work. Quoted upstream source retains its [MIT license](evidence/UPSTREAM-LICENSE.txt).
 
 </details>
+
+## Related security work
+
+### AppSec
+
+API authorization and invariant-based assessment: [FastAPI mutation benchmark matrix](benchmark.json).
+
+### AI Agent Security
+
+- [Browser Use](https://github.com/Keedz1Off/browser-use-agent-security-case-study) — navigation-policy boundaries.
+- [FastMCP / MCP SDK](https://github.com/Keedz1Off/fastmcp-auth-state-sse-case-study) — authentication state and SSE error propagation.
+- [Learn with GenAI](https://github.com/Keedz1Off/learn-with-genai-resource-lifecycle-case-study) — resource cleanup in a LangGraph application.
+
+### Web3
+
+[Web3 security case collection](https://github.com/Keedz1Off/web3-security-portfolio) and [Voxel Bench SR01](https://github.com/Keedz1Off/voxel-bench-sr01-case-study): smart-contract flows, invariants and author attribution.
