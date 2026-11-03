@@ -1,0 +1,35 @@
+{
+  "scope": "Neutral loopback HTTP startup controls; no mutation discovery",
+  "checks": [
+    {
+      "name": "health",
+      "status": 200
+    },
+    {
+      "name": "alice login",
+      "status": 200
+    },
+    {
+      "name": "alice /api/v1/users/me",
+      "status": 200
+    },
+    {
+      "name": "alice /api/v1/items/b1f198a4-2951-58e9-96ea-a0ef30edf341",
+      "status": 200
+    },
+    {
+      "name": "bob login",
+      "status": 200
+    },
+    {
+      "name": "bob /api/v1/users/me",
+      "status": 200
+    },
+    {
+      "name": "bob /api/v1/items/82c01803-48e4-5251-af47-fac45510c4c0",
+      "status": 200
+    }
+  ],
+  "all_controls_passed": true,
+  "listener_closed": true
+}

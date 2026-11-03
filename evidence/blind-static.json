@@ -1,0 +1,275 @@
+{
+  "findings": [
+    {
+      "candidateId": "FA-001",
+      "title": "Bearer authentication accepts attacker-modified JWT claims",
+      "rule": "Verify JWT signatures before trusting identity claims",
+      "cwe": "CWE-347",
+      "severity": "high",
+      "confidence": "high",
+      "attacker": "A caller able to reach the local API and supply a bearer token.",
+      "violated_invariant": "Authentication requires a valid signed, unexpired bearer credential; client-controlled data cannot select another principal.",
+      "source_to_sink": "The Authorization bearer token enters get_current_user. jwt.decode explicitly disables signature verification, then TokenPayload.sub is passed directly to session.get(User, ...). The resulting database user becomes CurrentUser, including its administrator privileges. The PyJWT option also disables default expiration verification unless explicitly re-enabled.",
+      "concrete_impact": "A caller knowing an active user's UUID can manufacture or alter a token to impersonate that user. Choosing an active administrator's UUID authorizes administrator operations. Expired credentials are also accepted by this decoding configuration.",
+      "prerequisites": [
+        "Reachability of the local listener.",
+        "Knowledge of a target active user's UUID; the user-list weakness can supply these identifiers.",
+        "No knowledge of SECRET_KEY or target password is required."
+      ],
+      "locations": [
+        {
+          "path": "backend/app/api/deps.py",
+          "start_line": 30,
+          "end_line": 46
+        },
+        {
+          "path": "backend/app/api/deps.py",
+          "start_line": 52,
+          "end_line": 57
+        }
+      ],
+      "quoted_source_evidence": [
+        "payload = jwt.decode(\n    token, settings.SECRET_KEY, algorithms=[security.ALGORITHM], options={\"verify_signature\": False}\n)",
+        "token_data = TokenPayload(**payload)",
+        "user = session.get(User, token_data.sub)",
+        "if not current_user.is_superuser:"
+      ],
+      "counterevidence": [
+        "The dependency rejects missing users and inactive database users.",
+        "Token issuance signs JWTs with HS256, but the consuming dependency does not validate those signatures.",
+        "The random fixture signing key is deliberate setup and is unnecessary for this attack."
+      ],
+      "remediation": "Remove the signature-verification override. Require and validate exp and sub, retain the fixed algorithm allowlist, and reject malformed, tampered, expired, missing-subject, and inactive-user credentials before resolving an authorized principal."
+    },
+    {
+      "candidateId": "FA-002",
+      "title": "Ordinary authenticated users can enumerate every user",
+      "rule": "Require administrator authorization for the user directory",
+      "cwe": "CWE-862",
+      "severity": "medium",
+      "confidence": "high",
+      "attacker": "An ordinary active user with a valid bearer credential.",
+      "violated_invariant": "Listing all users requires administrator privileges.",
+      "source_to_sink": "GET /api/v1/users/ depends only on get_current_user. Its database queries count and select the entire User table without a role check or principal filter, and return the resulting UsersPublic collection.",
+      "concrete_impact": "An ordinary user obtains other accounts' email addresses, names, UUIDs, active status, administrator flags, and creation timestamps. The independently reported response-model weakness additionally exposes their password hashes.",
+      "prerequisites": [
+        "An ordinary active account.",
+        "Reachability of the local API."
+      ],
+      "locations": [
+        {
+          "path": "backend/app/api/routes/users.py",
+          "start_line": 33,
+          "end_line": 52
+        }
+      ],
+      "quoted_source_evidence": [
+        "dependencies=[Depends(get_current_user)]",
+        "count_statement = select(func.count()).select_from(User)",
+        "select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)",
+        "return UsersPublic(data=users_public, count=count)"
+      ],
+      "counterevidence": [
+        "Authentication is required.",
+        "Other administrator user-management routes use get_current_active_superuser.",
+        "This finding does not require exploiting the JWT verification weakness."
+      ],
+      "remediation": "Change the directory endpoint dependency to get_current_active_superuser. Verify that ordinary users receive a denial while administrators can still list and paginate users."
+    },
+    {
+      "candidateId": "FA-003",
+      "title": "Self-service profile updates permit persistent administrator escalation",
+      "rule": "Exclude security attributes from self-service update models",
+      "cwe": "CWE-915",
+      "severity": "high",
+      "confidence": "high",
+      "attacker": "An ordinary active user with a valid bearer credential.",
+      "violated_invariant": "Self-service profile updates permit name and email changes but cannot grant roles or change security attributes.",
+      "source_to_sink": "PATCH /api/v1/users/me accepts UserUpdateMe, which exposes is_superuser. The handler dumps every supplied field and applies it to the authenticated database user with sqlmodel_update, then commits. Subsequent administrator dependencies trust the persisted is_superuser value.",
+      "concrete_impact": "An ordinary user can submit {\"is_superuser\": true}, become an administrator, and then create or modify other users, delete other users, and manage all items.",
+      "prerequisites": [
+        "An ordinary active account.",
+        "A valid token for that account; no forged credential is necessary."
+      ],
+      "locations": [
+        {
+          "path": "backend/app/models.py",
+          "start_line": 40,
+          "end_line": 43
+        },
+        {
+          "path": "backend/app/api/routes/users.py",
+          "start_line": 82,
+          "end_line": 101
+        },
+        {
+          "path": "backend/app/api/deps.py",
+          "start_line": 52,
+          "end_line": 57
+        }
+      ],
+      "quoted_source_evidence": [
+        "class UserUpdateMe(SQLModel):\n    is_superuser: bool | None = None",
+        "user_data = user_in.model_dump(exclude_unset=True)",
+        "current_user.sqlmodel_update(user_data)",
+        "session.commit()"
+      ],
+      "counterevidence": [
+        "The handler checks email uniqueness, but this does not constrain role updates.",
+        "The administrator-only update endpoint has a role dependency, but the self-service route independently writes the same security attribute.",
+        "Public signup uses UserRegister, which does not expose is_superuser."
+      ],
+      "remediation": "Remove is_superuser from UserUpdateMe and explicitly allow only full_name and email in self-service updates. Keep role changes confined to administrator-authorized operations."
+    },
+    {
+      "candidateId": "FA-004",
+      "title": "Item lookup exposes another user's item by identifier",
+      "rule": "Authorize object ownership before returning an item",
+      "cwe": "CWE-639",
+      "severity": "medium",
+      "confidence": "high",
+      "attacker": "An ordinary active user who knows another user's item UUID.",
+      "violated_invariant": "Ordinary users may read only their own items; administrators may read all items.",
+      "source_to_sink": "GET /api/v1/items/{id} accepts a caller-supplied UUID, loads the corresponding Item, checks only existence, and returns it. CurrentUser is resolved but never compared with item.owner_id.",
+      "concrete_impact": "An ordinary user can retrieve another user's item title, description, owner identifier, and timestamps.",
+      "prerequisites": [
+        "An ordinary active account with a valid bearer credential.",
+        "Knowledge of the target item's UUID. Arbitrary UUID discovery is not established by this finding."
+      ],
+      "locations": [
+        {
+          "path": "backend/app/api/routes/items.py",
+          "start_line": 48,
+          "end_line": 56
+        }
+      ],
+      "quoted_source_evidence": [
+        "def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:",
+        "item = session.get(Item, id)",
+        "if not item:\n    raise HTTPException(status_code=404, detail=\"Item not found\")\nreturn item"
+      ],
+      "counterevidence": [
+        "Authentication is required.",
+        "The item list filters ordinary users by owner_id.",
+        "Item update and deletion correctly check ownership or administrator status.",
+        "UUID unpredictability can make discovery harder but does not authorize a known identifier."
+      ],
+      "remediation": "Before returning an item, require current_user.is_superuser or item.owner_id == current_user.id. Alternatively constrain the lookup query to authorized items."
+    },
+    {
+      "candidateId": "FA-005",
+      "title": "Public user responses serialize stored password hashes",
+      "rule": "Keep password verifiers out of API response models",
+      "cwe": "CWE-200",
+      "severity": "medium",
+      "confidence": "high",
+      "attacker": "A caller receiving a UserPublic response; an ordinary user can obtain other users' responses through FA-002.",
+      "violated_invariant": "Passwords and password hashes must not appear in public API responses.",
+      "source_to_sink": "UserPublic explicitly requires hashed_password. Handlers return User database instances or validate them into UserPublic, so FastAPI's response serialization includes the stored password verifier. UsersPublic embeds that same response model for every directory entry.",
+      "concrete_impact": "Password hashes leave the backend through profile, signup, token-test, user-management, and directory responses. Combined with the directory authorization weakness, an ordinary user can collect all account hashes for offline password guessing.",
+      "prerequisites": [
+        "Access to an endpoint returning UserPublic.",
+        "Obtaining other accounts' hashes additionally requires an authorized administrator response or another access-control weakness such as FA-002.",
+        "Successful password recovery from a hash depends on password strength and is not assumed."
+      ],
+      "locations": [
+        {
+          "path": "backend/app/models.py",
+          "start_line": 59,
+          "end_line": 68
+        },
+        {
+          "path": "backend/app/api/routes/users.py",
+          "start_line": 49,
+          "end_line": 52
+        },
+        {
+          "path": "backend/app/api/routes/users.py",
+          "start_line": 125,
+          "end_line": 130
+        },
+        {
+          "path": "backend/app/api/routes/login.py",
+          "start_line": 45,
+          "end_line": 50
+        }
+      ],
+      "quoted_source_evidence": [
+        "class UserPublic(UserBase):\n    hashed_password: str",
+        "class UsersPublic(SQLModel):\n    data: list[UserPublic]",
+        "users_public = [UserPublic.model_validate(user) for user in users]",
+        "@router.get(\"/me\", response_model=UserPublic)",
+        "return current_user"
+      ],
+      "counterevidence": [
+        "The exposed value is a password hash rather than plaintext.",
+        "Password storage uses Argon2 with bcrypt compatibility, which raises offline guessing cost but does not justify disclosure.",
+        "The fixture password is intentionally public; this finding concerns disclosure of the product's stored verifier field."
+      ],
+      "remediation": "Remove hashed_password from UserPublic and every externally serialized model. Preserve it only on the internal database model and verify response bodies never contain password or hashed_password fields."
+    }
+  ],
+  "resolved_questions": [
+    {
+      "question": "What implementation and entry points were reviewed?",
+      "resolution": "The product is Python 3.14 FastAPI using SQLModel, Pydantic, PyJWT and pwdlib. app.main mounts api_router under the configured /api/v1 prefix. Reviewed login, password recovery/reset, user management, item management, utility endpoints, authentication dependencies, persistence helpers, security helpers and settings."
+    },
+    {
+      "question": "Were findings independently frozen without execution or preparation metadata?",
+      "resolution": "Yes. This result is frozen from static reads of the authorized current target. No application code, runtime tests, network requests, external applications, Git history, parent/sibling directories, preparation scripts, answer files, security-scan tools or delegated agents were used."
+    },
+    {
+      "question": "Does the local adapter replace authorization or make a production exposure claim appropriate?",
+      "resolution": "lab_support/runtime.py replaces database wiring and creates disposable fixtures; it does not override authentication or authorization dependencies. serve.py binds only loopback. Severities describe compromise of this synthetic local application's boundaries, not an internet deployment or upstream project."
+    },
+    {
+      "question": "Are embedded access-bearing credentials or private keys present in reviewed product source?",
+      "resolution": "No real embedded access-bearing secret or private key was found in the reviewed product source. SECRET_KEY, SMTP credentials and the initial administrator password are settings inputs. crud.py's DUMMY_HASH is explicitly a timing-defense dummy verifier. lab_support's public fixture password, unused fixture database URL and generated signing key are demonstrable disposable setup and excluded from findings."
+    },
+    {
+      "question": "Are password changes and inactive-user checks independently missing?",
+      "resolution": "No. The self-service password handler verifies the current password before committing. Login and get_current_user reject inactive users. Password reset verifies the JWT signature through a separate helper and rejects inactive users. These controls do not repair the bearer signature bypass."
+    },
+    {
+      "question": "Are all item operations missing ownership controls?",
+      "resolution": "No. Item listing scopes ordinary users to their own owner_id; item creation forces owner_id to the authenticated principal; update and deletion check ownership or administrator status before mutation. The directly supported ownership omission is the item-by-ID read endpoint."
+    },
+    {
+      "question": "Are administrator checks universally absent?",
+      "resolution": "No. User creation, updates to an identified user, deletion of another user, test email and password-recovery HTML preview use get_current_active_superuser. The user directory independently lacks that role check, and self-service role assignment can undermine all existing administrator checks."
+    },
+    {
+      "question": "Does the private development route establish another current local-runtime authorization finding?",
+      "resolution": "The private account-creation router is mounted only when FASTAPI_ENV equals development. The local adapter removes FASTAPI_ENV and ordinary public signup already allows creation of non-administrator accounts. No additional current local-runtime privilege violation was established from this development-only route."
+    },
+    {
+      "question": "Were injection, SSRF, unsafe deserialization and filesystem boundaries inspected?",
+      "resolution": "Reviewed product paths use SQLModel query construction rather than attacker-concatenated SQL. No product subprocess execution, eval, pickle-style deserialization, attacker-selected outbound URL fetch or attacker-selected filesystem path sink was found. Email template names and SMTP destinations are selected by code/configuration. Real email, browser rendering and deployment behavior remain outside runtime coverage."
+    },
+    {
+      "question": "Do rejected operations visibly commit protected mutations?",
+      "resolution": "The reviewed ownership and administrator denials occur before their protected writes. The password-change denial also precedes mutation. No separate commit-before-denial vulnerability was identified. Public authentication may upgrade an already verified password hash, which is a hashing maintenance operation rather than evidence of an unauthorized protected action."
+    }
+  ],
+  "fully_reviewed_files": [
+    "backend/app/__init__.py",
+    "backend/app/main.py",
+    "backend/app/initial_data.py",
+    "backend/app/models.py",
+    "backend/app/crud.py",
+    "backend/app/utils.py",
+    "backend/app/core/__init__.py",
+    "backend/app/core/config.py",
+    "backend/app/core/db.py",
+    "backend/app/core/security.py",
+    "backend/app/api/__init__.py",
+    "backend/app/api/main.py",
+    "backend/app/api/deps.py",
+    "backend/app/api/routes/__init__.py",
+    "backend/app/api/routes/items.py",
+    "backend/app/api/routes/login.py",
+    "backend/app/api/routes/private.py",
+    "backend/app/api/routes/users.py",
+    "backend/app/api/routes/utils.py"
+  ]
+}

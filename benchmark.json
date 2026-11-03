@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "experiment_date": "2026-11-03",
+  "kind": "seeded-vulnerability static-audit benchmark",
+  "upstream": {
+    "repository": "https://github.com/fastapi/full-stack-fastapi-template",
+    "commit": "f4bcfaba7c85be3c6332cc74a20819f586dcdbc6",
+    "license": "MIT"
+  },
+  "summary": {
+    "planted_root_causes": 5,
+    "independent_static_findings": 5,
+    "matched_root_causes": 5,
+    "missed_root_causes": 0,
+    "extra_reported_candidates": 0,
+    "fully_reviewed_product_python_files": 19,
+    "neutral_http_controls_passed": 7,
+    "exploit_http_scenarios_confirmed": 0
+  },
+  "method": {
+    "preparation": "The parent introduced deliberate local code changes and retained a separate answer key.",
+    "independence": "The static auditor had a fresh context, current source and a general behavior contract. No seed list or count was supplied.",
+    "freeze": "Independent JSON was archived before answer-key comparison.",
+    "scoring": "Match frozen finding locations to seeded root-control spans.",
+    "isolation_limit": "Context separation and task restrictions, not OS-enforced filesystem isolation."
+  },
+  "integrity": {
+    "blind_static_sha256": "1c5bee834e2f712f3baf14c01c5ef6371e654f44186e37d2ea48f2af60493ad6",
+    "original_local_answer_key_sha256": "bd9a05d28bd0325ab977e9358484a1e9b35cdbfdd9a0f1582aa8dccae93285ba",
+    "local_snapshot_digest": "3221e10c7efad7458d250ddf665265e9c1b553d10133f4540fb5a14c5399aa63",
+    "audited_non_cache_files_unchanged": true
+  },
+  "runtime": {
+    "fixture": "Actual loopback HTTP backend using Python 3.14 and a SQLite/UUID adapter.",
+    "positive_controls": "Health plus Alice/Bob login, own profile and own item: seven HTTP 200 responses; listener closed.",
+    "candidate_validation": "Not performed: the runtime-validation worker was stopped by automatic cybersecurity review. No alternate execution was used."
+  },
+  "rows": [
+    {
+      "seed_id": "SEED-01",
+      "title": "JWT signature verification disabled",
+      "owasp_api_2023": "API2:2023 Broken Authentication",
+      "cwe": "CWE-347",
+      "invariant": "Token signatures must be verified.",
+      "local_derivative_location": {
+        "path": "backend/app/api/deps.py",
+        "lines": [
+          [
+            33,
+            33
+          ]
+        ]
+      },
+      "blind_finding_ids": [
+        "FA-001"
+      ],
+      "static_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-001"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-01"
+        }
+      ],
+      "limits": "Source-backed result in one deliberate local mutation; no exploit-level HTTP confirmation or upstream vulnerability claim."
+    },
+    {
+      "seed_id": "SEED-02",
+      "title": "Item ownership check removed",
+      "owasp_api_2023": "API1:2023 Broken Object Level Authorization",
+      "cwe": "CWE-639",
+      "invariant": "An ordinary user must not read another user's item.",
+      "local_derivative_location": {
+        "path": "backend/app/api/routes/items.py",
+        "lines": [
+          [
+            56,
+            56
+          ]
+        ]
+      },
+      "blind_finding_ids": [
+        "FA-004"
+      ],
+      "static_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-004"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-02"
+        }
+      ],
+      "limits": "Source-backed result in one deliberate local mutation; no exploit-level HTTP confirmation or upstream vulnerability claim."
+    },
+    {
+      "seed_id": "SEED-03",
+      "title": "User directory role guard weakened",
+      "owasp_api_2023": "API5:2023 Broken Function Level Authorization",
+      "cwe": "CWE-862",
+      "invariant": "Only administrators may list all users.",
+      "local_derivative_location": {
+        "path": "backend/app/api/routes/users.py",
+        "lines": [
+          [
+            34,
+            36
+          ]
+        ]
+      },
+      "blind_finding_ids": [
+        "FA-002"
+      ],
+      "static_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-002"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-03"
+        }
+      ],
+      "limits": "Source-backed result in one deliberate local mutation; no exploit-level HTTP confirmation or upstream vulnerability claim."
+    },
+    {
+      "seed_id": "SEED-04",
+      "title": "Role accepted in self-profile input",
+      "owasp_api_2023": "API3:2023 Broken Object Property Level Authorization",
+      "cwe": "CWE-915",
+      "invariant": "Self-service profile updates must not grant administrator privileges.",
+      "local_derivative_location": {
+        "path": "backend/app/models.py",
+        "lines": [
+          [
+            40,
+            42
+          ]
+        ]
+      },
+      "blind_finding_ids": [
+        "FA-003"
+      ],
+      "static_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-003"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-04"
+        }
+      ],
+      "limits": "Source-backed result in one deliberate local mutation; no exploit-level HTTP confirmation or upstream vulnerability claim."
+    },
+    {
+      "seed_id": "SEED-05",
+      "title": "Password hash added to public output",
+      "owasp_api_2023": "API3:2023 Broken Object Property Level Authorization",
+      "cwe": "CWE-200",
+      "invariant": "Public user responses must not expose password hashes.",
+      "local_derivative_location": {
+        "path": "backend/app/models.py",
+        "lines": [
+          [
+            60,
+            62
+          ]
+        ]
+      },
+      "blind_finding_ids": [
+        "FA-005"
+      ],
+      "static_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-005"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-05"
+        }
+      ],
+      "limits": "Source-backed result in one deliberate local mutation; no exploit-level HTTP confirmation or upstream vulnerability claim."
+    }
+  ],
+  "limitations": [
+    "One artificial snapshot and one independent static attempt; no general detection rate.",
+    "No exploit-level HTTP validation, mutation-test kill score or CI/Semgrep benchmark.",
+    "PostgreSQL-specific behavior, frontend, real SMTP, deployment, load and full upstream suite were not tested.",
+    "Modified application and preparation scripts remain local; this evidence repository is not a runnable reproduction.",
+    "No upstream vulnerability discovery or verified remediation is claimed."
+  ]
+}

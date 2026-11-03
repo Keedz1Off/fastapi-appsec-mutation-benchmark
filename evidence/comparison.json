@@ -1,0 +1,106 @@
+{
+  "created_utc": "2026-11-03T17:32:27.883150+00:00",
+  "upstream_revision": "f4bcfaba7c85be3c6332cc74a20819f586dcdbc6",
+  "blind_static_sha256": "1c5bee834e2f712f3baf14c01c5ef6371e654f44186e37d2ea48f2af60493ad6",
+  "answer_key_sha256": "bd9a05d28bd0325ab977e9358484a1e9b35cdbfdd9a0f1582aa8dccae93285ba",
+  "snapshot_sha256": "3221e10c7efad7458d250ddf665265e9c1b553d10133f4540fb5a14c5399aa63",
+  "audited_snapshot_unchanged": true,
+  "seed_root_causes": 5,
+  "blind_static_reported": 5,
+  "detected_seed_roots": 5,
+  "missed_seed_roots": [],
+  "extra_unseeded_candidates": [],
+  "rows": [
+    {
+      "seed_id": "SEED-01",
+      "owasp": "API2:2023 Broken Authentication",
+      "invariant": "Token signatures must be verified.",
+      "path": "backend/app/api/deps.py",
+      "seed_spans": [
+        [
+          33,
+          33
+        ]
+      ],
+      "blind_static_matches": [
+        "FA-001"
+      ],
+      "static_detected": true,
+      "runtime_status": "not_run_automatic_safety_block"
+    },
+    {
+      "seed_id": "SEED-02",
+      "owasp": "API1:2023 Broken Object Level Authorization",
+      "invariant": "An ordinary user must not read another user's item.",
+      "path": "backend/app/api/routes/items.py",
+      "seed_spans": [
+        [
+          56,
+          56
+        ]
+      ],
+      "blind_static_matches": [
+        "FA-004"
+      ],
+      "static_detected": true,
+      "runtime_status": "not_run_automatic_safety_block"
+    },
+    {
+      "seed_id": "SEED-03",
+      "owasp": "API5:2023 Broken Function Level Authorization",
+      "invariant": "Only administrators may list all users.",
+      "path": "backend/app/api/routes/users.py",
+      "seed_spans": [
+        [
+          34,
+          36
+        ]
+      ],
+      "blind_static_matches": [
+        "FA-002"
+      ],
+      "static_detected": true,
+      "runtime_status": "not_run_automatic_safety_block"
+    },
+    {
+      "seed_id": "SEED-04",
+      "owasp": "API3:2023 Broken Object Property Level Authorization",
+      "invariant": "Self-service profile updates must not grant administrator privileges.",
+      "path": "backend/app/models.py",
+      "seed_spans": [
+        [
+          40,
+          42
+        ]
+      ],
+      "blind_static_matches": [
+        "FA-003"
+      ],
+      "static_detected": true,
+      "runtime_status": "not_run_automatic_safety_block"
+    },
+    {
+      "seed_id": "SEED-05",
+      "owasp": "API3:2023 Broken Object Property Level Authorization",
+      "invariant": "Public user responses must not expose password hashes.",
+      "path": "backend/app/models.py",
+      "seed_spans": [
+        [
+          60,
+          62
+        ]
+      ],
+      "blind_static_matches": [
+        "FA-005"
+      ],
+      "static_detected": true,
+      "runtime_status": "not_run_automatic_safety_block"
+    }
+  ],
+  "method": "Match frozen independent source locations to deliberately mutated root-control spans. Parent knew preparation data; blind auditor had a fresh context and was instructed to inspect target only. Context separation was not OS-enforced filesystem isolation.",
+  "runtime_validation": "Exploit-scenario worker was stopped by automatic cybersecurity review. No workaround or equivalent retry was used. Only seven neutral loopback HTTP smoke controls executed; all passed and listener closed.",
+  "limitations": [
+    "One educational snapshot and one independent static attempt; not a real-world detection rate.",
+    "No runtime confirmation of planted violations, PostgreSQL, frontend, real SMTP, deployment, load or upstream vulnerability claim."
+  ]
+}

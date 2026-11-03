@@ -1,0 +1,86 @@
+{
+  "format": "Publication summary of local mutations; not the original answer-key bytes",
+  "original_local_answer_key_sha256": "bd9a05d28bd0325ab977e9358484a1e9b35cdbfdd9a0f1582aa8dccae93285ba",
+  "mutations": [
+    {
+      "seed_id": "SEED-01",
+      "title": "JWT signature verification disabled",
+      "mutation": "The bearer decoder trusts an unverified subject.",
+      "owasp_api_2023": "API2:2023 Broken Authentication",
+      "required_invariant": "Token signatures must be verified.",
+      "local_derivative_location": {
+        "path": "backend/app/api/deps.py",
+        "lines": [
+          [
+            33,
+            33
+          ]
+        ]
+      }
+    },
+    {
+      "seed_id": "SEED-02",
+      "title": "Item ownership check removed",
+      "mutation": "The item-by-ID reader returns the selected record without an owner/admin check.",
+      "owasp_api_2023": "API1:2023 Broken Object Level Authorization",
+      "required_invariant": "An ordinary user must not read another user's item.",
+      "local_derivative_location": {
+        "path": "backend/app/api/routes/items.py",
+        "lines": [
+          [
+            56,
+            56
+          ]
+        ]
+      }
+    },
+    {
+      "seed_id": "SEED-03",
+      "title": "User directory role guard weakened",
+      "mutation": "The user directory requires an active user instead of an administrator.",
+      "owasp_api_2023": "API5:2023 Broken Function Level Authorization",
+      "required_invariant": "Only administrators may list all users.",
+      "local_derivative_location": {
+        "path": "backend/app/api/routes/users.py",
+        "lines": [
+          [
+            34,
+            36
+          ]
+        ]
+      }
+    },
+    {
+      "seed_id": "SEED-04",
+      "title": "Role accepted in self-profile input",
+      "mutation": "The self-profile schema accepts is_superuser, and the handler persists supplied fields.",
+      "owasp_api_2023": "API3:2023 Broken Object Property Level Authorization",
+      "required_invariant": "Self-service profile updates must not grant administrator privileges.",
+      "local_derivative_location": {
+        "path": "backend/app/models.py",
+        "lines": [
+          [
+            40,
+            42
+          ]
+        ]
+      }
+    },
+    {
+      "seed_id": "SEED-05",
+      "title": "Password hash added to public output",
+      "mutation": "The public user response schema includes hashed_password.",
+      "owasp_api_2023": "API3:2023 Broken Object Property Level Authorization",
+      "required_invariant": "Public user responses must not expose password hashes.",
+      "local_derivative_location": {
+        "path": "backend/app/models.py",
+        "lines": [
+          [
+            60,
+            62
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "status": "candidate_runtime_validation_not_performed",
+  "reason": "Automatic cybersecurity review stopped the validation worker; this is not an HTTP test result.",
+  "neutral_http_controls": "Seven ordinary loopback HTTP controls passed, and the listener closed.",
+  "scope": "Synthetic local accounts and SQLite adapter; no external service or production target."
+}
