@@ -14,6 +14,18 @@ Educational assessment of a local derivative of the [Full Stack FastAPI Template
 
 Missed roots: **0**. Extra reported candidates: **0**. These counts describe one static attempt on one artificial snapshot.
 
+## Boundaries, tests and evidence
+
+The [boundary matrix](matrices/boundaries.json) links each invariant to its frozen static finding. [Python tests](tests/test_recorded_evidence.py) cross-check that mapping and the [seven recorded normal HTTP responses](evidence/runtime-smoke.json). The recorded runtime coverage applies to those normal requests. [Runtime status](evidence/runtime-status.json).
+
+Run the offline evidence checks from the repository root with Python 3.10 or later.
+
+```sh
+python -B -m unittest discover -s tests -v
+```
+
+These checks read saved files and do not launch the assessed application.
+
 ## Flow
 
 ```mermaid

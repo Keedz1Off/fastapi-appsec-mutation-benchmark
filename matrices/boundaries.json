@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "rows": [
+    {
+      "id": "SEED-01",
+      "invariant": "Token signatures must be verified.",
+      "finding_ids": [
+        "FA-001"
+      ],
+      "analysis_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-001"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-01"
+        }
+      ]
+    },
+    {
+      "id": "SEED-02",
+      "invariant": "An ordinary user must not read another user's item.",
+      "finding_ids": [
+        "FA-004"
+      ],
+      "analysis_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-004"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-02"
+        }
+      ]
+    },
+    {
+      "id": "SEED-03",
+      "invariant": "Only administrators may list all users.",
+      "finding_ids": [
+        "FA-002"
+      ],
+      "analysis_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-002"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-03"
+        }
+      ]
+    },
+    {
+      "id": "SEED-04",
+      "invariant": "Self-service profile updates must not grant administrator privileges.",
+      "finding_ids": [
+        "FA-003"
+      ],
+      "analysis_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-003"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-04"
+        }
+      ]
+    },
+    {
+      "id": "SEED-05",
+      "invariant": "Public user responses must not expose password hashes.",
+      "finding_ids": [
+        "FA-005"
+      ],
+      "analysis_status": "identified_and_source_confirmed",
+      "runtime_status": "not_performed",
+      "evidence": [
+        {
+          "file": "evidence/blind-static.json",
+          "candidate_ids": [
+            "FA-005"
+          ]
+        },
+        {
+          "file": "evidence/comparison.json",
+          "seed_id": "SEED-05"
+        }
+      ]
+    }
+  ]
+}
