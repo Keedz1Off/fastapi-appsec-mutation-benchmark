@@ -19,6 +19,7 @@ Missed roots: **0**. Extra reported candidates: **0**. These counts describe one
 | Open | What you will find |
 | --- | --- |
 | [Flow](#flow) | See how the auditor's findings were saved before comparison with the answer key. |
+| [Testing pipeline](#testing-pipeline) | Follow the invariant-to-finding comparison and the separate normal HTTP controls. |
 | [Benchmark index](benchmark.json) · [Boundary matrix](matrices/boundaries.json) | Match each seeded issue to an invariant and a saved finding. |
 | [Comparison](evidence/comparison.json) · [HTTP controls](evidence/runtime-smoke.json) | Read the static detection result and the recorded normal HTTP checks. |
 | [GitHub Actions](#github-actions) | Run consistency checks on the recorded benchmark results. |
@@ -33,9 +34,58 @@ Run the offline evidence checks from the repository root with Python 3.10 or lat
 python -B -m unittest discover -s tests -v
 ```
 
+## Flow
+
+```mermaid
+flowchart LR
+    P["Prepare local mutations"] --> S["Source snapshot without Git history"]
+    S --> A["Fresh-context static auditor"]
+    A --> F["Freeze independent findings"]
+    F --> C["Compare with separate answer key"]
+```
+
+## Testing pipeline
+
+Each matrix row connects an expected security rule to a frozen static finding. The normal HTTP controls have their own saved observations.
+
+```mermaid
+flowchart TD
+    Matrix["Boundary matrix and invariant"] --> Static["Frozen independent static finding"]
+    Static --> Compare["Compare with the separate mutation catalog"]
+    Compare --> Result["Recorded static detection result"]
+    HTTP["Seven ordinary HTTP controls"] --> Saved["Saved status and cleanup observations"]
+    Result --> Checks["Offline Python consistency checks"]
+    Saved --> Checks
+    Checks --> Report["Case study with recorded coverage and limits"]
+```
+
+| Part | Open |
+| --- | --- |
+| Rule and finding mapping | [Benchmark index](benchmark.json) and [boundary matrix](matrices/boundaries.json) |
+| Static result and comparison | [Frozen audit](evidence/blind-static.json) and [comparison](evidence/comparison.json) |
+| Normal HTTP observations | [Runtime controls](evidence/runtime-smoke.json) and [runtime status](evidence/runtime-status.json) |
+| Current CI assertions | [Offline Python tests](tests/test_recorded_evidence.py) |
+
+The five seeded defects belong to the recorded benchmark. Actions checks its saved data. Automatic mutation generation, mutation kill scoring and exploit-level validation remain outside the current workflow.
+
 ## GitHub Actions
 
 Open [Case study checks](https://github.com/Keedz1Off/fastapi-appsec-mutation-benchmark/actions/workflows/checks.yml) and click **Run workflow**. CI reads the matrix JSON and checks the saved evidence offline. The run saves a `check-results` log. Select **CD demo** to also download `verified-delivery` with the log, commit SHA and checksum after checks pass.
+
+### CI flow
+
+```mermaid
+flowchart TD
+    Trigger["Push, pull request or Run workflow"] --> Setup["Checkout commit and prepare Python"]
+    Setup --> Input["Read matrix JSON"]
+    Input --> Check["Check finding links and saved HTTP controls"]
+    Check --> Log["Save check-results log"]
+    Check --> Result{"Checks passed?"}
+    Result -->|No| Fail["CI failed"]
+    Result -->|Yes| Pass["CI passed"]
+    Pass -->|"Manual run with CD demo enabled"| Bundle["Archive log, commit and checksum"]
+    Bundle --> Delivery["Save verified-delivery artifact"]
+```
 
 ### What happens in Actions
 
@@ -48,16 +98,6 @@ Open [Case study checks](https://github.com/Keedz1Off/fastapi-appsec-mutation-be
 | CD demo | After a passing manual run, CI saves the log, commit SHA and SHA-256 checksum as `verified-delivery`. |
 
 [See the workflow file](.github/workflows/checks.yml). This job checks the material shipped in this repository offline.
-
-## Flow
-
-```mermaid
-flowchart LR
-    P["Prepare local mutations"] --> S["Source snapshot without Git history"]
-    S --> A["Fresh-context static auditor"]
-    A --> F["Freeze independent findings"]
-    F --> C["Compare with separate answer key"]
-```
 
 ## How to read
 
